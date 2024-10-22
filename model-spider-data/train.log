@@ -1,0 +1,36 @@
+Log level set to: INFO
+Log at: /data/zhangyk/logs/c12_c14_c16_c19_c29_c31_c32_c38_c43_c57_c59_c86_c9__c86__Aircraft_CIFAR10_CIFAR100_Caltech101_Cars_DTD_Pet_SUN397_dSprites/0326-15-16-22-600
+Train fixed samples: 832
+Size: Train [832], Val [64], Test [9]
+[1 / 1] lr: 0.00025
+[1] CIFAR10 test	weightedtau	0.9094	0.9152
+[1] CIFAR10 test	pearsonr	0.9094	0.9152
+[1] Caltech101 test	weightedtau	0.6660	0.8909
+[1] Caltech101 test	pearsonr	0.6660	0.8909
+[1] DTD test	weightedtau	0.5816	0.8303
+[1] DTD test	pearsonr	0.5816	0.8303
+[1] Pet test	weightedtau	0.8517	0.8667
+[1] Pet test	pearsonr	0.8517	0.8667
+[1] Aircraft test	weightedtau	0.4051	0.6242
+[1] Aircraft test	pearsonr	0.4051	0.6242
+[1] CIFAR100 test	weightedtau	1.0000	1.0000
+[1] CIFAR100 test	pearsonr	1.0000	1.0000
+[1] Cars test	weightedtau	0.5700	0.7333
+[1] Cars test	pearsonr	0.5700	0.7333
+[1] SUN397 test	weightedtau	0.8910	0.9636
+[1] SUN397 test	pearsonr	0.8910	0.9636
+[1] dSprites test	weightedtau	0.6583	0.5636
+[1] dSprites test	pearsonr	0.6583	0.5636
+[1] Caltech101 test	weightedtau	0.7608	0.9273
+[1] Caltech101 test	pearsonr	0.7608	0.9273
+[1] DTD test	weightedtau	0.6954	0.8424
+[1] DTD test	pearsonr	0.6954	0.8424
+[1] Aircraft test	weightedtau	0.5062	0.6485
+[1] Aircraft test	pearsonr	0.5062	0.6485
+[1] Cars test	weightedtau	0.7850	0.7697
+[1] Cars test	pearsonr	0.7850	0.7697
+[1] SUN397 test	weightedtau	0.9543	0.9758
+[1] SUN397 test	pearsonr	0.9543	0.9758
+[1] dSprites test	weightedtau	0.6794	0.6000
+[1] dSprites test	pearsonr	0.6794	0.6000
+
