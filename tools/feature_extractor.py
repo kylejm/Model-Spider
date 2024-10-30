@@ -290,6 +290,11 @@ class FeatureExtractor(object):
 
             print(f'{do_k} of {self.model} on {self.dataset}: {results[do_k]}\n')
 
+            # Open results_pass.txt in append mode
+            with open('results_pass.txt', 'a') as f:
+                # Write the formatted string to the file
+                f.write(f'{do_k} of {self.model} on {self.dataset}: {results[do_k]}\n')
+
         return results
 
     def get_judge_list(self, model):
