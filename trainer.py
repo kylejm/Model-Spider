@@ -12,6 +12,10 @@ from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
 
 from learnware.model import LearnwareCAHeterogeneous
+<<<<<<< HEAD
+from learnware.hardware_token import HardwareTokenizer
+=======
+>>>>>>> bb033336504af8005e8bf0b1d65d1c31e7228892
 from learnware.loss import HierarchicalCE
 from learnware.dataset import LearnwareDataset
 from utils import PrepareFunc, pprint, Logger, set_seed, save_pickle, set_gpu, nan_assert, get_command_line_parser, measure_test
@@ -62,6 +66,17 @@ class Trainer(object):
         return parser
 
     def __init__(self, args):
+<<<<<<< HEAD
+        """
+        Hardware Tokenizer 
+        """
+        tokenizer = HardwareTokenizer()
+        self.hw_vec = tokenizer.get_hardware_vector_manual("NVIDIA-A10", 24.0, 32.0, 150.0, 100.0)
+        self.hw_vec = self.hw_vec.unsqueeze(0).to(torch.device('cuda'))
+
+
+=======
+>>>>>>> bb033336504af8005e8bf0b1d65d1c31e7228892
         if args.time_str == '':
             args.time_str = datetime.datetime.now().strftime('%m%d-%H-%M-%S-%f')[:-3]
 
@@ -98,7 +113,12 @@ class Trainer(object):
             heads=1,
             dropout=0.1,
             emb_dropout=0.1,
+<<<<<<< HEAD
+            heterogeneous_extra_prompt=args.heterogeneous_extra_prompt,
+            hardware_dim=96
+=======
             heterogeneous_extra_prompt=args.heterogeneous_extra_prompt
+>>>>>>> bb033336504af8005e8bf0b1d65d1c31e7228892
         )
         self.model = self.model.to(torch.device('cuda'))
 
@@ -349,11 +369,24 @@ class Trainer(object):
                 x_uni, x_hete, prompt_id2hete_pad_length, _ = self.preprocess_hete_inputs(inputs)
 
                 if x_hete is not None:
+<<<<<<< HEAD
+                    outputs = self.model(
+                        x_uni=x_uni,
+                        x_hete=x_hete,
+                        attn_mask_func=self.hete_attn_pad_func(pad_length),
+                        prompt_id2hete_pad_length=prompt_id2hete_pad_length,
+                        hw_vec=self.hw_vec,
+                    )
+                else:
+                    pad_attn_mask = self.get_attn_pad_mask(pad_length)
+                    outputs = self.model(x_uni, x_hete, pad_attn_mask, hw_vec=self.hw_vec)
+=======
                     outputs = self.model(x_uni, x_hete, prompt_id2hete_pad_length,
                                          attn_mask_func=self.hete_attn_pad_func(pad_length))
                 else:
                     pad_attn_mask = self.get_attn_pad_mask(pad_length)
                     outputs = self.model(x_uni, x_hete, pad_attn_mask)
+>>>>>>> bb033336504af8005e8bf0b1d65d1c31e7228892
 
                 loss = self.criterion(outputs, labels)
                 self.optimizer.zero_grad()
@@ -430,10 +463,17 @@ class Trainer(object):
                 x_uni, x_hete, prompt_id2hete_pad_length, cur_batch_heterogeneous_sampled_num = self.preprocess_hete_inputs(inputs)
 
                 if x_hete is not None:
+<<<<<<< HEAD
+                    outputs = self.model(x_uni, x_hete, prompt_id2hete_pad_length, attn_mask_func=self.hete_attn_pad_func(pad_length), hw_vec=self.hw_vec)
+                else:
+                    pad_attn_mask = self.get_attn_pad_mask(pad_length)
+                    outputs = self.model(x_uni, x_hete, pad_attn_mask, hw_vec=self.hw_vec)
+=======
                     outputs = self.model(x_uni, x_hete, prompt_id2hete_pad_length, attn_mask_func=self.hete_attn_pad_func(pad_length))
                 else:
                     pad_attn_mask = self.get_attn_pad_mask(pad_length)
                     outputs = self.model(x_uni, x_hete, pad_attn_mask)
+>>>>>>> bb033336504af8005e8bf0b1d65d1c31e7228892
 
                 rankings = torch.zeros_like(outputs).long().scatter_(1, torch.sort(outputs, dim=-1)[1].to(torch.device('cuda')), torch.arange(outputs.shape[1]).repeat(outputs.shape[0], 1).to(torch.device('cuda')))  # Converting continuous numerical values into rankings, where smaller values receive lower rankings.
 

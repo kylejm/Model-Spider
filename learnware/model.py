@@ -93,7 +93,8 @@ class LearnwareCAHeterogeneous(nn.Module):
                  dropout: float = 0.,
                  emb_dropout: float = 0.,
                  mode='concat-out-feature',
-                 heterogeneous_extra_prompt=False):
+                 heterogeneous_extra_prompt=False,
+                 hardware_dim: int = 0):
 
         super().__init__()
         assert pool in {'cls', 'mean'}, 'pool type must be either cls (cls token) or mean (mean pooling)'
@@ -112,9 +113,11 @@ class LearnwareCAHeterogeneous(nn.Module):
         self.pool = pool
         self.to_latent = nn.Identity()
 
+        aggregator_input_dim = dim + hardware_dim if hardware_dim > 0 else dim
+
         self.mlp_head = nn.Sequential(
-            nn.LayerNorm(dim),
-            nn.Linear(dim, 1)
+            nn.LayerNorm(aggregator_input_dim),
+            nn.Linear(aggregator_input_dim, 1)
         )
 
         uni_and_hete_dim = 1024
@@ -126,7 +129,7 @@ class LearnwareCAHeterogeneous(nn.Module):
 
         self.hete_extra_prompt = heterogeneous_extra_prompt
 
-    def forward(self, x_uni, x_hete, attn_mask, attn_mask_func=None, permute_indices=None):
+    def forward(self, x_uni, x_hete, attn_mask=None, attn_mask_func=None, permute_indices=None, hw_vec=None):
         b = x_uni.shape[0]
 
         model_prompt = repeat(self.model_prompt, '1 c d -> b c d', b=b)
@@ -150,6 +153,10 @@ class LearnwareCAHeterogeneous(nn.Module):
                 cur_attn_mask = attn_mask
             cur_x = self.transformer(cur_x, cur_x, cur_x, cur_attn_mask)
             cur_x = cur_x.mean(dim=1) if self.pool == 'mean' else cur_x[:, 0]
+            if hw_vec is not None:
+                # shape of hw_vec => [batch_size, hardware_dim]
+                # shape of cur_x  => [batch_size, dim], e.g. 1024
+                cur_x = torch.cat([cur_x, hw_vec], dim=-1)
             cur_x = self.to_latent(cur_x)
             cur_x = self.mlp_head(cur_x)
             outputs.append(cur_x)
