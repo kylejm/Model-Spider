@@ -13,6 +13,9 @@ from .learnware_info import DATASET2DIR, DATA_SPECIFIC_RANK, BKB_SPECIFIC_RANK, 
 def load_pickle(file_name):
     with open(file_name, 'rb') as f:
         return pickle.load(f)
+    
+
+    #add loading in from .pkl or .jsonl?????
 
 
 class LearnwareDataset(Dataset):
@@ -81,7 +84,15 @@ class LearnwareDataset(Dataset):
         else:
             cur_discrete_type = 'FTRank'
 
-        x = load_pickle(self.samples[index][0])
+        #get the sample data
+        sample_data = load_pickle(self.samples[index][0])
+        hardware_vector = None
+
+        if isinstance(sample_data, dict):
+            hardware_vector = sample_data.get('hardware', None)
+            x = sample_data
+        else:
+            x = sample_data
 
         def pad_x(cur_x4pad):
             if cur_x4pad.shape[0] < self.prototype_maxnum:
@@ -94,7 +105,8 @@ class LearnwareDataset(Dataset):
 
         if isinstance(x, torch.Tensor):
             ret_x, pad_length = pad_x(x)
-            return ret_x, DATA_SPECIFIC_RANK[self.samples[index][1]][cur_discrete_type], self.samples[index][1], pad_length
+            #added hardware vector
+            return ret_x, DATA_SPECIFIC_RANK[self.samples[index][1]][cur_discrete_type], self.samples[index][1], pad_length, hardware_vector
         elif isinstance(x, list):
             ret_x, pad_length = pad_x(x[0])
             if self.heterogeneous:
@@ -102,17 +114,18 @@ class LearnwareDataset(Dataset):
                 # print(self.samples[index][0], [len(sample_hete[ii]) for ii in sample_hete.keys()])
                 ret_x = (ret_x, sample_hete)
             if len(x) == 3:
-                return ret_x, x[2] if self.continuous_label else x[2].to(torch.long), self.samples[index][1], pad_length
+                return ret_x, x[2] if self.continuous_label else x[2].to(torch.long), self.samples[index][1], pad_length, hardware_vector
             elif len(x) == 2:
                 # z_xxx.pkl：
-                return ret_x, DATA_SPECIFIC_RANK[self.samples[index][1]][cur_discrete_type], self.samples[index][1], pad_length
+                return ret_x, DATA_SPECIFIC_RANK[self.samples[index][1]][cur_discrete_type], self.samples[index][1], pad_length, hardware_vector
 
     def __len__(self):
         return len(self.samples)
 
     @staticmethod
     def collate_fn(batch):
-        x_uni_hete, cur_rank, dataset_name, pad_length = zip(*batch)
+        #hardware vector
+        x_uni_hete, cur_rank, dataset_name, pad_length, hardware_vector = zip(*batch)
         ret_x = []
         ret_hete_x = {}  # {bkb: list}
         ret_hete_x_indices = {}  # {bkb: list}
@@ -145,4 +158,4 @@ class LearnwareDataset(Dataset):
                     ret_hete_x_indices[bkb_k].append((idx, bkbid))
         # print('k', [len(ret_hete_x[iii]) for iii in ret_hete_x.keys()])
 
-        return (torch.stack(ret_x), (ret_hete_x, ret_hete_x_indices), ret_batchid2bkbid), torch.stack(cur_rank), dataset_name, torch.tensor(pad_length)
+        return (torch.stack(ret_x), (ret_hete_x, ret_hete_x_indices), ret_batchid2bkbid, hardware_vector), torch.stack(cur_rank), dataset_name, torch.tensor(pad_length)
