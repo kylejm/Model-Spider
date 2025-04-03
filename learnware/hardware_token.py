@@ -9,6 +9,7 @@ class HardwareTokenizer:
       - Other numeric fields for VRAM, RAM, power usage, latency, etc.
       - Output dimension should be 1024
     """
+    
 
     GPU_TYPE_LIST = [
 
