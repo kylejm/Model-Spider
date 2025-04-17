@@ -121,7 +121,11 @@ class LearnwareCAHeterogeneous(nn.Module):
         )
 
         uni_and_hete_dim = 1024
-        self.uni_linear = nn.Linear(MODEL2FEAT_DIM[data_sub_url], uni_and_hete_dim)
+        # self.uni_linear = nn.Linear(MODEL2FEAT_DIM[data_sub_url], uni_and_hete_dim)
+        #hardware dim
+        uni_input_dim = MODEL2FEAT_DIM[data_sub_url] + hardware_dim
+        #1024
+        self.uni_linear = nn.Linear(uni_input_dim, uni_and_hete_dim)
         self.hete_linears = nn.ModuleDict({i_bkb: nn.Linear(MODEL2FEAT_DIM[i_bkb], uni_and_hete_dim) for i_bkb in BKB_SPECIFIC_RANK})
 
         self.uni_prompt = nn.Parameter(torch.randn(1, uni_hete_proto_dim[0], dim))
@@ -130,8 +134,16 @@ class LearnwareCAHeterogeneous(nn.Module):
         self.hete_extra_prompt = heterogeneous_extra_prompt
 
     def forward(self, x_uni, x_hete, attn_mask=None, attn_mask_func=None, permute_indices=None, hw_vec=None):
-        b = x_uni.shape[0]
+        if hw_vec is not None:
+            # concatenate
+            merged = torch.cat([x_uni, hw_vec], dim=-1)
+        else:
+            merged = x_uni
 
+        # Project to 1024‑D
+        x_uni = self.uni_linear(merged) 
+
+        b = x_uni.shape[0]
         model_prompt = repeat(self.model_prompt, '1 c d -> b c d', b=b)
 
         uni_prompt = repeat(self.uni_prompt, '1 c d -> b c d', b=b)
@@ -151,14 +163,16 @@ class LearnwareCAHeterogeneous(nn.Module):
             else:
                 cur_x = torch.cat([cur_prompt, x_uni], dim=1)
                 cur_attn_mask = attn_mask
+
             cur_x = self.transformer(cur_x, cur_x, cur_x, cur_attn_mask)
             cur_x = cur_x.mean(dim=1) if self.pool == 'mean' else cur_x[:, 0]
-            if hw_vec is not None:
-                # shape of hw_vec => [batch_size, hardware_dim]
-                # shape of cur_x  => [batch_size, dim], e.g. 1024
-                cur_x = torch.cat([cur_x, hw_vec], dim=-1)
             cur_x = self.to_latent(cur_x)
+
+            #not sure if we need this
+            if hw_vec is not None:
+                cur_x = torch.cat([cur_x, hw_vec], dim=-1)
             cur_x = self.mlp_head(cur_x)
+            
             outputs.append(cur_x)
 
         outputs = torch.cat(outputs, dim=-1)
